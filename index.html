@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Merriweather:ital,wght@1,700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* === 1. ДИЗАЙН-СИСТЕМА И КВАНТОВАЯ АТМОСФЕРА === */
+    /* === 1. ДИЗАЙН-СИСТЕМА И КВАНТОВАЯ АТМОСФЕРА (HIG + Fluent 2 + Material 3 OKLCH) === */
     :root {
       --primary: #2563eb;
       --primary-glow: rgba(37, 99, 235, 0.35);
@@ -31,17 +31,38 @@
       --slate-950: #020617;
       --slate-900: #0f172a;
       --slate-800: #1e293b;
-      --slate-600: #475569;
-      --slate-400: #94a3b8;
+      --slate-600: #334155; /* Усилен контраст по WCAG 2.2 AA */
+      --slate-400: #64748b;
       --glass-bg: rgba(255, 255, 255, 0.82);
       --glass-border: rgba(255, 255, 255, 0.95);
       --card-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.07), 0 4px 12px -2px rgba(15, 23, 42, 0.03), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --ease-spring: cubic-bezier(0.22, 1.28, 0.36, 1);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @supports (color: oklch(0.55 0.21 262)) {
+      :root {
+        --primary: oklch(0.55 0.21 262);
+        --primary-glow: oklch(0.55 0.21 262 / 0.35);
+        --emerald: oklch(0.69 0.16 162);
+        --violet: oklch(0.55 0.24 293);
+        --rose: oklch(0.58 0.22 16);
+      }
+    }
+
+    html {
+      font-optical-sizing: auto;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     body.contrast-glass {
-      --glass-bg: rgba(255, 255, 255, 0.94);
-      --card-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(203, 213, 225, 0.8);
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --card-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(203, 213, 225, 0.85);
     }
 
     body.masterpiece-theme {
@@ -49,9 +70,29 @@
       background-size: 400% 400%;
       animation: gradientBG 18s ease infinite;
       min-height: 100vh;
+      min-height: 100dvh;
       position: relative;
       overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    /* Zen-режим («Режим фокуса без визуального шума» — Apple Deference) */
+    body.zen-mode .aurora-orb,
+    body.zen-mode #neural-canvas,
+    body.zen-mode .sidebar-column,
+    body.zen-mode .info-grid {
+      display: none !important;
+    }
+    body.zen-mode .dashboard-container {
+      grid-template-columns: 1fr !important;
+      max-width: 860px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     @keyframes gradientBG {
@@ -81,7 +122,9 @@
     #neural-canvas {
       position: fixed;
       top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       pointer-events: none;
       z-index: 0;
       opacity: 0.65;
@@ -91,24 +134,30 @@
       position: relative;
       z-index: 1;
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
     }
 
+    /* GPU-ускоренный индикатор прокрутки (Composite-only через scaleX) */
     .scroll-progress-bar {
       position: fixed;
       top: 0; left: 0;
-      height: 3.5px; width: 0%;
+      height: 3.5px;
+      width: 100%;
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      will-change: transform;
       background: linear-gradient(90deg, #2563eb, #8b5cf6, #10b981);
       z-index: 9999;
-      transition: width 0.1s ease-out;
+      transition: transform 0.08s linear;
       box-shadow: 0 0 12px rgba(37, 99, 235, 0.6);
     }
 
     .reveal-up {
       opacity: 1;
       transform: translateY(0);
-      transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.65s var(--ease-out-expo), transform 0.65s var(--ease-out-expo);
     }
     .js-loaded .reveal-up {
       opacity: 0;
@@ -121,13 +170,18 @@
     .delay-100 { transition-delay: 0.08s; }
     .delay-200 { transition-delay: 0.16s; }
 
-    /* === 2. DASHBOARD LAYOUT === */
+    /* === 2. DASHBOARD LAYOUT & CONTAINER QUERIES === */
     .dashboard-container {
       display: grid;
       grid-template-columns: 1.42fr 0.82fr;
       gap: 30px;
       margin-top: 28px;
       align-items: start;
+    }
+
+    .main-column {
+      container-type: inline-size;
+      min-width: 0;
     }
 
     /* === 3. HERO SECTION === */
@@ -229,31 +283,46 @@
       align-items: center;
       gap: 6px;
       padding: 7px 13px;
+      min-height: 36px;
       border-radius: 10px;
       font-size: 0.78rem;
       font-weight: 700;
+      font-family: inherit;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       color: var(--slate-600);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s var(--ease-spring);
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+      touch-action: manipulation;
     }
-    .tool-pill-btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-      transform: translateY(-1px);
+    @media (hover: hover) and (pointer: fine) {
+      .tool-pill-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-1px);
+      }
+    }
+    .tool-pill-btn:active {
+      transform: scale(0.96);
+    }
+    .tool-pill-btn.zen-active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
     }
     .tool-pill-btn.sos-pill {
       background: #fff1f2;
       border-color: #fecdd3;
       color: #be123c;
     }
-    .tool-pill-btn.sos-pill:hover {
-      background: #e11d48;
-      color: #ffffff;
-      border-color: #e11d48;
-      box-shadow: 0 6px 16px rgba(225, 29, 72, 0.25);
+    @media (hover: hover) and (pointer: fine) {
+      .tool-pill-btn.sos-pill:hover {
+        background: #e11d48;
+        color: #ffffff;
+        border-color: #e11d48;
+        box-shadow: 0 6px 16px rgba(225, 29, 72, 0.25);
+      }
     }
 
     .welcome-title {
@@ -263,6 +332,7 @@
       margin: 0 0 14px;
       line-height: 1.15;
       letter-spacing: -0.02em;
+      text-wrap: balance;
     }
 
     .greeting-highlight {
@@ -274,10 +344,11 @@
 
     .welcome-text {
       font-size: clamp(0.94rem, 1.5vw, 1.05rem);
-      color: #475569;
+      color: var(--slate-600);
       line-height: 1.65;
-      max-width: 95%;
+      max-width: 68ch;
       margin-bottom: 26px;
+      text-wrap: pretty;
     }
 
     .hero-actions-row {
@@ -289,11 +360,10 @@
 
     /*
      * ======================================================================
-     * ИСПРАВЛЕНИЕ БЕГУЩЕЙ ЗМЕЙКИ (.btn-magic и .rgb-quote-card) НА СМАРТФОНАХ
+     * БЕГУЩАЯ ЗМЕЙКА (.btn-magic и .rgb-quote-card)
      * ЗА ЧТО ОТВЕЧАЕТ: Вращающийся неоновый ободок вокруг главной кнопки и карточки цитаты.
      * ПОЧЕМУ РАБОТАЕТ НА ТЕЛЕФОНАХ:
-     * 1. Квадратное ядро (width: 800px; height: 800px) вместо процентного эллипса 300%x300%
-     *    гарантирует равномерное свечение по всему периметру широкой кнопки на мобильных экранах.
+     * 1. Квадратное ядро (width: 800px; height: 800px) обеспечивает равномерное свечение по всему периметру.
      * 2. Локальный контекст наложения (isolation: isolate; z-index: 0/1/2) и GPU-ускорение
      *    translate3d(-50%, -50%, 0) предотвращают проваливание градиента под фон в мобильных WebKit/Blink.
      * ======================================================================
@@ -315,10 +385,11 @@
       text-decoration: none;
       overflow: hidden;
       z-index: 1;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+      transition: transform 0.3s var(--ease-spring), box-shadow 0.3s ease;
       box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.28);
       border: none;
       cursor: pointer;
+      touch-action: manipulation;
     }
     .btn-magic::before {
       content: "";
@@ -327,7 +398,7 @@
       width: 800px; height: 800px;
       background: conic-gradient(transparent 0deg, transparent 220deg, #3b82f6 260deg, #a855f7 310deg, #ec4899 360deg);
       transform: translate3d(-50%, -50%, 0) rotate(0deg);
-      animation: rotate-border-gpu 3.5s linear infinite !important;
+      animation: rotate-border-gpu 3.5s linear infinite;
       will-change: transform;
       z-index: 0;
       pointer-events: none;
@@ -345,12 +416,14 @@
       position: relative;
       z-index: 2;
     }
-    .btn-magic:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 16px 32px -6px rgba(124, 58, 237, 0.38);
-      opacity: 1;
+    @media (hover: hover) and (pointer: fine) {
+      .btn-magic:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 16px 32px -6px rgba(124, 58, 237, 0.38);
+        opacity: 1;
+      }
     }
-    .btn-magic:active { transform: scale(0.98); }
+    .btn-magic:active { transform: scale(0.97); }
 
     @keyframes rotate-border-gpu {
       0% { transform: translate3d(-50%, -50%, 0) rotate(0deg); }
@@ -369,17 +442,23 @@
       color: var(--slate-800);
       font-size: 0.95rem;
       font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.25s var(--ease-spring);
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+      touch-action: manipulation;
     }
-    .btn-quick-search:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-      background: #ffffff;
-      box-shadow: 0 10px 22px -5px rgba(37, 99, 235, 0.15);
-      transform: translateY(-2px);
+    @media (hover: hover) and (pointer: fine) {
+      .btn-quick-search:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: #ffffff;
+        box-shadow: 0 10px 22px -5px rgba(37, 99, 235, 0.15);
+        transform: translateY(-2px);
+      }
     }
+    .btn-quick-search:active { transform: scale(0.97); }
+
     .kbd-badge {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.72rem;
@@ -415,17 +494,24 @@
     }
     .resume-link-btn {
       padding: 10px 18px;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border-radius: 12px;
       background: #10b981;
       color: #ffffff;
       font-weight: 700;
       font-size: 0.88rem;
       text-decoration: none;
-      transition: 0.2s;
+      transition: 0.2s var(--ease-spring);
       white-space: nowrap;
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
     }
-    .resume-link-btn:hover { background: #059669; transform: translateY(-1px); }
+    @media (hover: hover) and (pointer: fine) {
+      .resume-link-btn:hover { background: #059669; transform: translateY(-1px); }
+    }
+    .resume-link-btn:active { transform: scale(0.97); }
 
     .info-grid {
       display: grid;
@@ -441,11 +527,13 @@
       position: relative;
       overflow: hidden;
       box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.05);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+      transition: transform 0.3s var(--ease-spring), box-shadow 0.3s ease;
     }
-    .spotlight-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 38px -10px rgba(37, 99, 235, 0.12);
+    @media (hover: hover) and (pointer: fine) {
+      .spotlight-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 38px -10px rgba(37, 99, 235, 0.12);
+      }
     }
 
     .spotlight-card::before {
@@ -462,7 +550,9 @@
       transition: opacity 0.4s;
       z-index: 0;
     }
-    .spotlight-card:hover::before { opacity: 1; }
+    @media (hover: hover) and (pointer: fine) {
+      .spotlight-card:hover::before { opacity: 1; }
+    }
 
     .spotlight-inner {
       background: rgba(255, 255, 255, 0.96);
@@ -490,10 +580,12 @@
       justify-content: center;
       font-size: 1.65rem;
       margin-bottom: 14px;
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.35s var(--ease-spring);
     }
-    .spotlight-card:hover .info-icon {
-      transform: scale(1.15) rotate(6deg);
+    @media (hover: hover) and (pointer: fine) {
+      .spotlight-card:hover .info-icon {
+        transform: scale(1.15) rotate(6deg);
+      }
     }
 
     .info-title {
@@ -504,7 +596,7 @@
     }
     .info-desc {
       font-size: 0.9rem;
-      color: #64748b;
+      color: var(--slate-600);
       line-height: 1.55;
       margin: 0;
     }
@@ -517,6 +609,7 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       box-shadow: var(--card-shadow);
+      container-type: inline-size;
     }
 
     .qn-header {
@@ -546,6 +639,7 @@
       display: flex;
       gap: 8px;
       overflow-x: auto;
+      overscroll-behavior-x: contain;
       padding: 6px;
       background: #f1f5f9;
       border-radius: 14px;
@@ -565,10 +659,15 @@
       color: var(--slate-600);
       font-weight: 700;
       font-size: 0.84rem;
+      font-family: inherit;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s var(--ease-spring);
+      touch-action: manipulation;
     }
-    .role-filter-btn:hover { color: var(--slate-900); }
+    @media (hover: hover) and (pointer: fine) {
+      .role-filter-btn:hover { color: var(--slate-900); }
+    }
+    .role-filter-btn:active { transform: scale(0.96); }
     .role-filter-btn.active {
       background: #ffffff;
       color: var(--primary);
@@ -581,6 +680,12 @@
       gap: 14px;
     }
 
+    /* Container Queries для адаптации внутри колонки */
+    @container (max-width: 540px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .mini-programs-grid { grid-template-columns: 1fr; }
+    }
+
     .mini-prog-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -590,12 +695,14 @@
       flex-direction: column;
       justify-content: space-between;
       gap: 12px;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.25s var(--ease-spring);
     }
-    .mini-prog-card:hover {
-      border-color: #93c5fd;
-      transform: translateY(-4px);
-      box-shadow: 0 14px 28px -8px rgba(37, 99, 235, 0.14);
+    @media (hover: hover) and (pointer: fine) {
+      .mini-prog-card:hover {
+        border-color: #93c5fd;
+        transform: translateY(-4px);
+        box-shadow: 0 14px 28px -8px rgba(37, 99, 235, 0.14);
+      }
     }
     .mp-top {
       display: flex;
@@ -646,7 +753,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 38px;
+      min-height: 40px;
       padding: 6px 12px;
       border-radius: 10px;
       background: #0f172a;
@@ -654,14 +761,18 @@
       font-size: 0.8rem;
       font-weight: 700;
       text-decoration: none;
-      transition: 0.2s;
+      transition: 0.2s var(--ease-spring);
     }
-    .mp-btn-study:hover { background: var(--primary); }
+    @media (hover: hover) and (pointer: fine) {
+      .mp-btn-study:hover { background: var(--primary); }
+    }
+    .mp-btn-study:active { transform: scale(0.97); }
+
     .mp-btn-test {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 38px;
+      min-height: 40px;
       padding: 6px 12px;
       border-radius: 10px;
       background: #f1f5f9;
@@ -669,9 +780,12 @@
       font-size: 0.8rem;
       font-weight: 700;
       text-decoration: none;
-      transition: 0.2s;
+      transition: 0.2s var(--ease-spring);
     }
-    .mp-btn-test:hover { background: #e2e8f0; color: var(--primary); }
+    @media (hover: hover) and (pointer: fine) {
+      .mp-btn-test:hover { background: #e2e8f0; color: var(--primary); }
+    }
+    .mp-btn-test:active { transform: scale(0.97); }
 
     .sidebar-widget {
       background: var(--glass-bg);
@@ -718,7 +832,7 @@
       border-radius: 12px;
     }
     .cal-nav-btn {
-      width: 30px; height: 30px;
+      width: 32px; height: 32px;
       border-radius: 8px;
       border: none;
       background: transparent;
@@ -728,13 +842,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      transition: all 0.2s var(--ease-spring);
+      touch-action: manipulation;
     }
-    .cal-nav-btn:hover {
-      background: #ffffff;
-      color: var(--primary);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    @media (hover: hover) and (pointer: fine) {
+      .cal-nav-btn:hover {
+        background: #ffffff;
+        color: var(--primary);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+      }
     }
+    .cal-nav-btn:active { transform: scale(0.92); }
 
     .cal-stats-strip {
       display: grid;
@@ -773,7 +891,7 @@
       touch-action: pan-y;
     }
     .cal-day-name {
-      color: #64748b;
+      color: #475569;
       font-weight: 700;
       padding-bottom: 6px;
       font-size: 0.7rem;
@@ -792,19 +910,25 @@
       color: #334155;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.18s var(--ease-spring);
       user-select: none;
       position: relative;
       border: 1px solid transparent;
+      touch-action: manipulation;
     }
-    .cal-day:hover:not(.empty) {
-      transform: translateY(-2px) scale(1.08);
-      background: #eff6ff;
-      border-color: #93c5fd;
-      color: var(--primary);
-      font-weight: 800;
-      z-index: 3;
-      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.15);
+    @media (hover: hover) and (pointer: fine) {
+      .cal-day:hover:not(.empty) {
+        transform: translateY(-2px) scale(1.08);
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: var(--primary);
+        font-weight: 800;
+        z-index: 3;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.15);
+      }
+    }
+    .cal-day:active:not(.empty) {
+      transform: scale(0.92);
     }
     .cal-day.today {
       background: linear-gradient(135deg, #10b981, #059669) !important;
@@ -900,7 +1024,8 @@
 
     .cal-ics-btn {
       margin-top: 8px;
-      padding: 7px 12px;
+      padding: 8px 12px;
+      min-height: 36px;
       border-radius: 8px;
       background: #2563eb;
       color: #ffffff;
@@ -916,10 +1041,13 @@
       transition: background 0.2s, transform 0.15s;
       width: 100%;
     }
-    .cal-ics-btn:hover {
-      background: #1d4ed8;
-      transform: translateY(-1px);
+    @media (hover: hover) and (pointer: fine) {
+      .cal-ics-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+      }
     }
+    .cal-ics-btn:active { transform: scale(0.98); }
 
     .cal-floating-tooltip {
       position: fixed;
@@ -986,16 +1114,20 @@
       border: 1px solid #e2e8f0;
       text-decoration: none;
       color: #334155;
-      transition: all 0.22s ease;
+      transition: all 0.22s var(--ease-spring);
       margin-bottom: 10px;
     }
     .npa-item:last-child { margin-bottom: 0; }
-    .npa-item:hover {
-      border-color: #2563eb;
-      background: #eff6ff;
-      transform: translateX(4px);
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    @media (hover: hover) and (pointer: fine) {
+      .npa-item:hover {
+        border-color: #2563eb;
+        background: #eff6ff;
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+      }
     }
+    .npa-item:active { transform: scale(0.98); }
+
     .npa-text {
       font-size: 0.85rem;
       font-weight: 700;
@@ -1005,7 +1137,7 @@
     .npa-sub {
       display: block;
       font-size: 0.75rem;
-      color: #64748b;
+      color: #475569;
       margin-top: 3px;
     }
 
@@ -1027,7 +1159,7 @@
       width: 800px; height: 800px;
       background: conic-gradient(transparent, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
       transform: translate3d(-50%, -50%, 0) rotate(0deg);
-      animation: rotate-border-gpu 4s linear infinite !important;
+      animation: rotate-border-gpu 4s linear infinite;
       will-change: transform;
       z-index: 0;
       pointer-events: none;
@@ -1049,6 +1181,7 @@
       line-height: 1.6;
     }
 
+    /* === МОДАЛЬНЫЕ ОКНА И BOTTOM SHEETS (С изоляцией скролла overscroll-behavior: contain) === */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -1062,8 +1195,9 @@
       padding: 8vh 16px 24px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.22s ease;
       overflow-y: auto;
+      overscroll-behavior: contain;
     }
     .modal-overlay.open {
       opacity: 1;
@@ -1078,10 +1212,21 @@
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
       overflow: hidden;
       transform: scale(0.96) translateY(-10px);
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.28s var(--ease-spring);
     }
     .modal-overlay.open .modal-box {
       transform: scale(1) translateY(0);
+    }
+
+    /* Ползунок для свайпа вниз на мобильных (Bottom Sheet Drag Pill) */
+    .sheet-drag-handle {
+      display: none;
+      width: 42px;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(148, 163, 184, 0.55);
+      margin: 10px auto 4px;
+      flex-shrink: 0;
     }
 
     .search-modal-header {
@@ -1097,6 +1242,7 @@
       outline: none;
       font-size: 1rem;
       font-weight: 600;
+      font-family: inherit;
       color: var(--slate-900);
       background: transparent;
       min-width: 0;
@@ -1128,16 +1274,21 @@
       background: #f1f5f9;
       border: none;
       padding: 8px 12px;
+      min-height: 36px;
       border-radius: 10px;
       font-size: 0.78rem;
       font-weight: 800;
+      font-family: inherit;
       color: var(--slate-600);
       cursor: pointer;
       flex-shrink: 0;
     }
     .search-results-list {
       max-height: 60vh;
+      max-height: 60dvh;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       padding: 10px;
     }
     .search-result-item {
@@ -1151,9 +1302,17 @@
       color: var(--slate-800);
       transition: background 0.15s;
     }
-    .search-result-item:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .search-result-item:hover {
+        background: #eff6ff;
+        color: var(--primary);
+      }
+    }
+    .search-result-item:focus-visible {
       background: #eff6ff;
       color: var(--primary);
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
     }
     .sri-left {
       display: flex;
@@ -1186,7 +1345,10 @@
       display: grid;
       gap: 12px;
       max-height: 75vh;
+      max-height: 75dvh;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
     .sos-card {
       padding: 14px 16px;
@@ -1214,6 +1376,7 @@
       gap: 10px;
       width: 100%;
       padding: 14px;
+      min-height: 50px;
       border-radius: 14px;
       background: #e11d48;
       color: #ffffff;
@@ -1221,19 +1384,22 @@
       font-size: 1rem;
       text-decoration: none;
       box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3);
-      transition: 0.2s;
+      transition: 0.2s var(--ease-spring);
     }
-    .call-112-btn:hover { background: #be123c; }
+    @media (hover: hover) and (pointer: fine) {
+      .call-112-btn:hover { background: #be123c; }
+    }
+    .call-112-btn:active { transform: scale(0.98); }
 
     .mobile-bottom-nav {
       display: none;
       position: fixed;
       bottom: 0; left: 0; right: 0;
       background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-top: 1px solid rgba(203, 213, 225, 0.85);
-      padding: 6px 8px calc(6px + var(--safe-bottom));
+      padding: 6px max(8px, var(--safe-right)) calc(6px + var(--safe-bottom)) max(8px, var(--safe-left));
       z-index: 9000;
       box-shadow: 0 -8px 25px rgba(15, 23, 42, 0.08);
       justify-content: space-around;
@@ -1253,18 +1419,22 @@
       color: var(--slate-600);
       font-size: 0.68rem;
       font-weight: 700;
+      font-family: inherit;
       border: none;
       background: transparent;
       cursor: pointer;
-      transition: 0.2s;
+      transition: 0.2s var(--ease-spring);
+      touch-action: manipulation;
     }
+    .mob-nav-item:active { transform: scale(0.93); }
     .mob-nav-item span.mob-icon { font-size: 1.2rem; line-height: 1; }
     .mob-nav-item.active { color: var(--primary); background: #eff6ff; }
     .mob-nav-item.sos-mob { color: #be123c; }
 
     .to-top-btn {
       position: fixed;
-      right: 20px; bottom: 24px;
+      right: max(20px, var(--safe-right));
+      bottom: 24px;
       width: 44px; height: 44px;
       border-radius: 50%;
       background: #ffffff;
@@ -1276,14 +1446,16 @@
       cursor: pointer;
       opacity: 0;
       pointer-events: none;
-      transition: all 0.25s ease;
+      transition: all 0.25s var(--ease-spring);
       z-index: 8500;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .to-top-btn.visible { opacity: 1; pointer-events: auto; }
-    .to-top-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); transform: translateY(-3px); }
+    @media (hover: hover) and (pointer: fine) {
+      .to-top-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); transform: translateY(-3px); }
+    }
 
     .system-status-pulse {
       display: inline-block; width: 8px; height: 8px;
@@ -1297,12 +1469,12 @@
       100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
     .header-meta {
-      font-size: 0.75rem; color: #64748b; font-weight: 500;
+      font-size: 0.75rem; color: var(--slate-600); font-weight: 600;
       display: flex; align-items: center; gap: 12px; margin-left: auto;
     }
 
     /* =========================================
-       ИДЕАЛЬНАЯ МОБИЛЬНАЯ АДАПТАЦИЯ (БЕЗ ДУБЛЕЙ И РАЗДУТОЙ ШАПКИ)
+       МОБИЛЬНАЯ АДАПТАЦИЯ И BOTTOM SHEETS (iOS HIG / Material 3)
        ========================================= */
     @media (max-width: 960px) {
       .dashboard-container { grid-template-columns: 1fr; gap: 24px; }
@@ -1312,15 +1484,11 @@
     @media (max-width: 768px) {
       body.masterpiece-theme { padding-bottom: calc(74px + var(--safe-bottom)); }
       .mobile-bottom-nav { display: flex; }
-      .to-top-btn { bottom: calc(84px + var(--safe-bottom)); right: 16px; }
+      .to-top-btn { bottom: calc(84px + var(--safe-bottom)); right: max(16px, var(--safe-right)); }
 
-      /*
-       * БЛОК: Компактная однострочная шапка на смартфонах (высота ~54px вместо 1/5 экрана).
-       * ЗА ЧТО ОТВЕЧАЕТ: Выстраивает бренд и кольцо Цифрового паспорта в одну линию,
-       * скрывая дубли верхнего меню, поиска и ЧС (так как они всегда закреплены в нижнем таб-баре).
-       */
+      /* Компактная однострочная шапка на смартфонах с учётом safe-top */
       .site-header.quantum-header {
-        padding: 8px 0 !important;
+        padding: calc(8px + var(--safe-top)) 0 8px !important;
       }
       .site-header.quantum-header .header-inner {
         flex-direction: row !important;
@@ -1355,22 +1523,44 @@
       /* Поповер Цифрового паспорта ровно по центру экрана телефона */
       .q-passport-popover {
         position: fixed !important;
-        top: 62px !important;
+        top: calc(62px + var(--safe-top)) !important;
         left: 12px !important;
         right: 12px !important;
         width: auto !important;
         max-width: none !important;
       }
 
+      /* Нативные нижние шторки (Bottom Sheets) для модальных окон на смартфонах */
+      .sheet-drag-handle {
+        display: block;
+      }
+      .modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+      }
+      .modal-box {
+        max-width: 100% !important;
+        border-radius: 26px 26px 0 0 !important;
+        padding-bottom: var(--safe-bottom);
+        transform: translateY(100%) !important;
+        transition: transform 0.32s var(--ease-spring) !important;
+        max-height: 90dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-overlay.open .modal-box {
+        transform: translateY(0) !important;
+      }
+
       /* Карточки в одну колонку */
       .info-grid { grid-template-columns: 1fr; gap: 16px; }
       .mini-programs-grid { grid-template-columns: 1fr; }
-      
+
       /* Кнопка реестра на всю ширину */
       .hero-actions-row { flex-direction: column; align-items: stretch; width: 100%; }
       .btn-magic { width: 100%; justify-content: center; text-align: center; padding: 15px 20px; }
       .welcome-text { max-width: 100%; margin-bottom: 20px; }
-      
+
       .welcome-badge-row {
         flex-direction: row !important;
         align-items: center !important;
@@ -1380,17 +1570,17 @@
       }
       .hero-quick-tools { width: auto; justify-content: flex-end; }
       .live-clock-pill { display: none; }
-      
+
       /* Календарь */
       .cal-stats-strip { grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 8px 4px; }
       .cal-stat-val { font-size: 0.8rem; }
       .cal-stat-lbl { font-size: 0.6rem; }
       .cal-day { max-width: 34px; font-size: 0.78rem; border-radius: 8px; }
       .cal-floating-tooltip { display: none; }
-      
+
       /* Сайдбар */
       .sidebar-widget { padding: 18px 16px; }
-      
+
       /* Виджет "Продолжить чтение" */
       .resume-widget { flex-direction: column; align-items: flex-start; }
       .resume-link-btn { width: 100%; text-align: center; }
@@ -1403,7 +1593,7 @@
       }
     }
 
-    /* Уважаем prefers-reduced-motion для фоновых орбов, НО сохраняем бегущую змейку на кнопке и цитате */
+    /* Соблюдение WCAG 2.2 AA (2.3.3): останавливаем бесконечное вращение, сохраняя статичный неоновый градиент */
     @media (prefers-reduced-motion: reduce) {
       .aurora-orb,
       .system-status-pulse,
@@ -1416,7 +1606,8 @@
       }
       .btn-magic::before,
       .rgb-quote-card::before {
-        animation: rotate-border-gpu 4s linear infinite !important;
+        animation: none !important;
+        transform: translate3d(-50%, -50%, 0) rotate(45deg) !important;
       }
     }
   </style>
@@ -1494,7 +1685,7 @@
         </div>
 
         <a href="index.html" class="brand-logo" title="На главную СДО">
-          <img src="assets/Филин от.png" alt="Логотип СДО" width="42" height="42" style="width: 100%; height: 100%; object-fit: contain;">
+          <img src="assets/Филин от.png" alt="Логотип СДО" width="42" height="42" decoding="async" fetchpriority="high" style="width: 100%; height: 100%; object-fit: contain;">
         </a>
         <div>
           <div class="site-title-mini">СДО</div>
@@ -1544,7 +1735,7 @@
               <h4 class="q-pass-title"><span aria-hidden="true">🎓</span> Цифровой паспорт СДО</h4>
               <span class="q-pass-rank" id="qPassportRank">Старт обучения</span>
             </div>
-            <div style="font-size: 0.76rem; color: #64748b; margin-bottom: 10px;">
+            <div style="font-size: 0.76rem; color: #475569; margin-bottom: 10px;">
               Автоматическая сводка изученных материалов в вашем браузере:
             </div>
             <div class="q-pass-list" id="qPassportList"></div>
@@ -1584,6 +1775,12 @@
                   <span class="live-clock-pill" id="liveClockPill" title="Точное системное время" aria-live="off">🕒 --:--:--</span>
                 </div>
                 <div class="hero-quick-tools">
+                  <button type="button" class="tool-pill-btn" id="zenModeToggleBtn"
+                          aria-pressed="false"
+                          title="Режим фокуса без визуального шума (Alt + Z)"
+                          aria-label="Включить режим фокуса без визуального шума">
+                    <span aria-hidden="true">🧘</span> Фокус
+                  </button>
                   <button type="button" class="tool-pill-btn" id="contrastToggleBtn"
                           aria-pressed="false"
                           title="Переключить четкость стеклянных панелей"
@@ -1622,7 +1819,7 @@
               <span style="font-size: 1.5rem;" aria-hidden="true">📖</span>
               <div>
                 <div style="font-size: 0.75rem; color: #047857; font-weight: 800; text-transform: uppercase;">Продолжить с сохраненного места</div>
-                <div><strong id="resumeTitleText">Курс</strong> <span id="resumePageText" style="color: #475569;"></span></div>
+                <div><strong id="resumeTitleText">Курс</strong> <span id="resumePageText" style="color: #334155;"></span></div>
               </div>
             </div>
             <a href="programs.html" class="resume-link-btn" id="resumeActionLink">Открыть лекцию ➔</a>
@@ -1796,7 +1993,7 @@
     </div>
   </main>
 
-  <footer class="glass-footer">
+  <footer class="glass-footer" id="siteFooter">
     <div class="container">
       <p>© 2026 Служба Охраны Труда. Внутренний ресурс.</p>
     </div>
@@ -1804,9 +2001,9 @@
 
 </div>
 
-  <button type="button" class="to-top-btn" id="toTopBtn" aria-label="Наверх" title="Наверх">↑</button>
+<button type="button" class="to-top-btn" id="toTopBtn" aria-label="Наверх" title="Наверх">↑</button>
 
-<nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
+<nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Мобильная навигация">
   <a href="index.html" class="mob-nav-item active" aria-current="page">
     <span class="mob-icon" aria-hidden="true">🏠</span>
     <span>Главная</span>
@@ -1831,6 +2028,7 @@
 
 <div class="modal-overlay" id="searchModal" aria-hidden="true">
   <div class="modal-box" role="dialog" aria-modal="true" aria-label="Быстрый поиск по порталу">
+    <div class="sheet-drag-handle" aria-hidden="true"></div>
     <div class="search-modal-header">
       <span style="font-size: 1.2rem;" aria-hidden="true">🔍</span>
       <input type="text" class="search-modal-input" id="searchModalInput"
@@ -1845,6 +2043,7 @@
 
 <div class="modal-overlay" id="sosModal" aria-hidden="true">
   <div class="modal-box" role="dialog" aria-modal="true" aria-label="Экстренная памятка ЧС">
+    <div class="sheet-drag-handle" aria-hidden="true"></div>
     <div class="sos-modal-top">
       <div>
         <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; font-weight: 700;">Оперативная памятка безопасности</div>
@@ -1884,7 +2083,16 @@
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // === 1. ДАТА, ЧАСЫ, ПРИВЕТСТВИЕ ===
+    // === 0. БЕЗОПАСНЫЙ ТАКТИЛЬНЫЙ ДВИЖОК (HAPTIC FEEDBACK) ===
+    const SDOHaptics = {
+      trigger(pattern = 10) {
+        if (!prefersReducedMotion && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          try { navigator.vibrate(pattern); } catch (e) {}
+        }
+      }
+    };
+
+    // === 1. ДАТА, ЧАСЫ, ПРИВЕТСТВИЕ И РЕЖИМ ФОКУСА (ZEN MODE) ===
     const now = new Date();
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const dateStr = now.toLocaleDateString('ru-RU', dateOptions);
@@ -1910,6 +2118,7 @@
 
     const contrastBtn = document.getElementById('contrastToggleBtn');
     contrastBtn?.addEventListener('click', () => {
+      SDOHaptics.trigger(8);
       document.body.classList.toggle('contrast-glass');
       const isActive = document.body.classList.contains('contrast-glass');
       contrastBtn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
@@ -1917,7 +2126,18 @@
       contrastBtn.style.color = isActive ? '#2563eb' : '';
     });
 
-    // === 2. АНИМАЦИЯ ПОЯВЛЕНИЯ, МОРФИНГ ШАПКИ И КНОПКА НАВЕРХ ===
+    const zenBtn = document.getElementById('zenModeToggleBtn');
+    function toggleZenMode() {
+      SDOHaptics.trigger(12);
+      const active = document.body.classList.toggle('zen-mode');
+      if (zenBtn) {
+        zenBtn.classList.toggle('zen-active', active);
+        zenBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      }
+    }
+    zenBtn?.addEventListener('click', toggleZenMode);
+
+    // === 2. АНИМАЦИЯ ПОЯВЛЕНИЯ, GPU-ПРОГРЕСС-БАР, МОРФИНГ ШАПКИ И КНОПКА НАВЕРХ ===
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) entry.target.classList.add('visible');
@@ -1933,7 +2153,8 @@
       const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
       const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
       if (scrollHeight > 0 && scrollProgress) {
-        scrollProgress.style.width = (scrollTop / scrollHeight) * 100 + "%";
+        const ratio = Math.min(Math.max(scrollTop / scrollHeight, 0), 1);
+        scrollProgress.style.transform = `scaleX(${ratio})`;
       }
       if (toTopBtn) {
         toTopBtn.classList.toggle('visible', scrollTop > 400);
@@ -1943,7 +2164,10 @@
       }
     }, { passive: true });
 
-    toTopBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' }));
+    toTopBtn?.addEventListener('click', () => {
+      SDOHaptics.trigger(10);
+      window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+    });
 
     // === 2.1. ЛОГИКА ШАПКИ QUANTUM COMMAND BAR V2.0 ===
     const qNavList = document.getElementById('qNavList');
@@ -1969,10 +2193,10 @@
     }
 
     qNavLinks.forEach(link => {
-      link.addEventListener('mouseenter', () => moveNavGlider(link));
+      link.addEventListener('pointerenter', () => moveNavGlider(link));
       link.addEventListener('focus', () => moveNavGlider(link));
     });
-    qNavList?.addEventListener('mouseleave', () => moveNavGlider(activeNavLink));
+    qNavList?.addEventListener('pointerleave', () => moveNavGlider(activeNavLink));
     window.addEventListener('resize', () => moveNavGlider(activeNavLink), { passive: true });
 
     // Контекстный радар секций при скролле
@@ -2009,6 +2233,7 @@
 
     qAppBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
+      SDOHaptics.trigger(8);
       const willOpen = !qAppDropdown.classList.contains('open');
       closeHeaderPopovers();
       if (willOpen) {
@@ -2019,6 +2244,7 @@
 
     qPassportBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
+      SDOHaptics.trigger(8);
       const willOpen = !qPassportPopover.classList.contains('open');
       closeHeaderPopovers();
       if (willOpen) {
@@ -2297,6 +2523,7 @@
 
     roleBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        SDOHaptics.trigger(8);
         roleBtns.forEach(b => {
           b.classList.remove('active');
           b.setAttribute('aria-pressed', 'false');
@@ -2536,7 +2763,7 @@
       '4.6': ['День крановщика (машиниста крана)', 'Международный день спойлеров', 'Василисков день'],
       '5.6': ['День эколога в России (Всемирный день охраны окружающей среды)', 'День образования российской полиции', 'Леонтий Конопляник'],
       '6.6': ['День русского языка (Пушкинский день России)', 'Праздник солнечных зайчиков', 'Свобориное дерево'],
-      '7.6': ['Всемирный день безопасности пищевых продуктов', 'День краудфандинга', 'Иван — Медвяные росы'],
+      '7.6': ['Всемирный день безопасности пищевых продуктов', 'День краудфан딩а', 'Иван — Медвяные росы'],
       '8.6': ['День социального работника в России', 'Всемирный день океанов', 'Карп Карполов'],
       '9.6': ['Международный день друзей', 'Международный день аккредитации', 'Федорин день'],
       '10.6': ['Всемирный день мороженого', 'Всемирный день модерна', 'Никита Гусятник'],
@@ -2800,6 +3027,7 @@
      * ПОЧЕМУ БЕЗОПАСНО: Работает локально в браузере через Blob без внешних сетевых запросов.
      */
     window.downloadTrainingIcs = function(y, m, d) {
+      SDOHaptics.trigger([10, 30, 10]);
       const start = new Date(y, m, d);
       const deadline13 = addWorkDays(start, 13);
       const pad = (n) => String(n).padStart(2, '0');
@@ -2886,6 +3114,8 @@
       for (let i = 1; i <= daysInMonth; i++) {
         const dayEl = document.createElement('div');
         dayEl.className = 'cal-day';
+        dayEl.setAttribute('tabindex', '0');
+        dayEl.setAttribute('role', 'button');
         dayEl.innerHTML = `<span>${i}</span>`;
 
         const currentDayDate = new Date(year, month, i);
@@ -2893,6 +3123,7 @@
         const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
         const dateKey = `${i}.${month + 1}`;
         const fullDateLabel = currentDayDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+        dayEl.setAttribute('aria-label', fullDateLabel);
 
         const holidayInfo = holidaysDB[dateKey];
         const proInfo = proDaysDB[dateKey];
@@ -2958,13 +3189,15 @@
           hoverPanelHTML = `💼 <strong>${fullDateLabel}:</strong> Штатный рабочий день. Кликните для полной сводки и расчета сроков.`;
         }
 
-        dayEl.addEventListener('mouseenter', () => {
+        dayEl.addEventListener('pointerenter', (e) => {
+          if (e.pointerType !== 'mouse') return;
           showCalendarTooltip(dayEl, badgeText, badgeBg, titleText, descText);
           calHelper.className = `cal-helper-panel ${panelClass}`;
           calHelper.innerHTML = hoverPanelHTML;
         });
 
-        dayEl.addEventListener('mouseleave', () => {
+        dayEl.addEventListener('pointerleave', (e) => {
+          if (e.pointerType !== 'mouse') return;
           hideCalendarTooltip();
           if (lockedInfoHTML) {
             calHelper.className = `cal-helper-panel ${lockedPanelClass}`;
@@ -2975,7 +3208,8 @@
           }
         });
 
-        dayEl.addEventListener('click', () => {
+        function selectCalendarDay() {
+          SDOHaptics.trigger(8);
           calGrid.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected-day'));
           dayEl.classList.add('selected-day');
 
@@ -3038,6 +3272,14 @@
 
           calHelper.className = `cal-helper-panel ${lockedPanelClass}`;
           calHelper.innerHTML = lockedInfoHTML;
+        }
+
+        dayEl.addEventListener('click', selectCalendarDay);
+        dayEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectCalendarDay();
+          }
         });
 
         calGrid.appendChild(dayEl);
@@ -3051,38 +3293,47 @@
     generateCalendar(calYear, calMonth);
 
     document.getElementById('calPrevBtn')?.addEventListener('click', () => {
+      SDOHaptics.trigger(8);
       calMonth--;
       if (calMonth < 0) { calMonth = 11; calYear--; }
       generateCalendar(calYear, calMonth);
     });
     document.getElementById('calNextBtn')?.addEventListener('click', () => {
+      SDOHaptics.trigger(8);
       calMonth++;
       if (calMonth > 11) { calMonth = 0; calYear++; }
       generateCalendar(calYear, calMonth);
     });
     document.getElementById('calTodayBtn')?.addEventListener('click', () => {
+      SDOHaptics.trigger(10);
       calYear = now.getFullYear();
       calMonth = now.getMonth();
       generateCalendar(calYear, calMonth);
     });
 
-    let touchStartX = 0;
-    calGrid?.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
+    // Свайп календаря через Pointer Events API
+    let calPointerStartX = null;
+    calGrid?.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      calPointerStartX = e.clientX;
     }, { passive: true });
-    calGrid?.addEventListener('touchend', (e) => {
-      const diff = touchStartX - e.changedTouches[0].screenX;
+    calGrid?.addEventListener('pointerup', (e) => {
+      if (calPointerStartX === null || e.pointerType === 'mouse') return;
+      const diff = calPointerStartX - e.clientX;
+      calPointerStartX = null;
       if (Math.abs(diff) > 50) {
+        SDOHaptics.trigger(10);
         if (diff > 0) document.getElementById('calNextBtn')?.click();
         else document.getElementById('calPrevBtn')?.click();
       }
     }, { passive: true });
 
-    // === 6. 3D TILT И SPOTLIGHT ===
+    // === 6. 3D TILT И SPOTLIGHT (ЧЕРЕЗ POINTER EVENTS) ===
     if (!prefersReducedMotion && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
       const hero = document.getElementById('tilt-hero');
       if (hero) {
-        hero.addEventListener('mousemove', (e) => {
+        hero.addEventListener('pointermove', (e) => {
+          if (e.pointerType !== 'mouse') return;
           const rect = hero.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const y = e.clientY - rect.top;
@@ -3094,13 +3345,14 @@
           hero.style.setProperty('--hero-y', `${y}px`);
           hero.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
         });
-        hero.addEventListener('mouseleave', () => {
+        hero.addEventListener('pointerleave', () => {
           hero.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
         });
       }
 
       document.querySelectorAll('.spotlight-card').forEach(card => {
-        card.addEventListener('mousemove', (e) => {
+        card.addEventListener('pointermove', (e) => {
+          if (e.pointerType !== 'mouse') return;
           const rect = card.getBoundingClientRect();
           card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
           card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
@@ -3108,7 +3360,7 @@
       });
     }
 
-    // === 7. МОДАЛЬНЫЕ ОКНА (Поиск и ЧС) ===
+    // === 7. МОДАЛЬНЫЕ ОКНА (Поиск и ЧС) + АТРИБУТ INERT + SWIPE-TO-DISMISS ===
     const searchItems = [
       { title: 'Каталог всех программ обучения', tag: 'Реестр', icon: '📚', url: 'programs.html' },
       { title: 'Охрана труда (Комплексная программа)', tag: 'ПП № 2464', icon: '🛡️', url: 'course-ot.html' },
@@ -3139,8 +3391,28 @@
     const searchResultsList = document.getElementById('searchResultsList');
     const sosModal = document.getElementById('sosModal');
 
+    const backgroundNodes = [
+      document.getElementById('quantumHeader'),
+      document.getElementById('main-content'),
+      document.getElementById('siteFooter'),
+      document.getElementById('mobileBottomNav')
+    ].filter(Boolean);
+
     let previousFocus = null;
     let activeModal = null;
+
+    function setBackgroundInert(isInert) {
+      document.body.classList.toggle('modal-open', isInert);
+      backgroundNodes.forEach(node => {
+        if (isInert) {
+          node.setAttribute('inert', '');
+          node.setAttribute('aria-hidden', 'true');
+        } else {
+          node.removeAttribute('inert');
+          node.removeAttribute('aria-hidden');
+        }
+      });
+    }
 
     function getFocusable(modal) {
       return Array.from(modal.querySelectorAll(
@@ -3167,6 +3439,7 @@
       activeModal = modal;
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
+      setBackgroundInert(true);
       document.addEventListener('keydown', trapFocusHandler, true);
       setTimeout(() => {
         const target = focusTarget || getFocusable(modal)[0];
@@ -3175,9 +3448,10 @@
     }
 
     function closeModal(modal) {
-      if (!modal.classList.contains('open')) return;
+      if (!modal || !modal.classList.contains('open')) return;
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
+      setBackgroundInert(false);
       document.removeEventListener('keydown', trapFocusHandler, true);
       if (activeModal === modal) activeModal = null;
       if (previousFocus && typeof previousFocus.focus === 'function') {
@@ -3193,7 +3467,7 @@
       if (filtered.length === 0) {
         searchResultsList.innerHTML = '';
         const msg = document.createElement('div');
-        msg.style.cssText = 'padding: 24px; text-align: center; color: #64748b;';
+        msg.style.cssText = 'padding: 24px; text-align: center; color: #475569;';
         msg.textContent = `Ничего не найдено по запросу «${query}»`;
         searchResultsList.appendChild(msg);
         return;
@@ -3214,6 +3488,7 @@
     }
 
     function openSearchModal(initialText = '') {
+      SDOHaptics.trigger(10);
       openModal(searchModal, searchInput);
       searchInput.value = initialText;
       renderSearchModalList(initialText);
@@ -3224,6 +3499,7 @@
     }
 
     function openSosModal() {
+      SDOHaptics.trigger([15, 40, 20]);
       openModal(sosModal, document.getElementById('closeSosModal'));
     }
 
@@ -3238,17 +3514,88 @@
     searchModal?.addEventListener('click', (e) => { if (e.target === searchModal) closeSearchModalFn(); });
     searchInput?.addEventListener('input', (e) => renderSearchModalList(e.target.value));
 
+    // Навигация стрелками вверх/вниз по результатам поиска
+    searchModal?.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const links = Array.from(searchResultsList?.querySelectorAll('.search-result-item') || []);
+      if (!links.length) return;
+      e.preventDefault();
+      const idx = links.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') {
+        const next = idx < links.length - 1 ? links[idx + 1] : links[0];
+        next.focus();
+      } else {
+        const prev = idx > 0 ? links[idx - 1] : searchInput;
+        prev.focus();
+      }
+    });
+
     document.getElementById('heroSosBtn')?.addEventListener('click', openSosModal);
     document.getElementById('qHeaderSosBtn')?.addEventListener('click', openSosModal);
     document.getElementById('mobSosBtn')?.addEventListener('click', openSosModal);
     document.getElementById('closeSosModal')?.addEventListener('click', closeSosModalFn);
     sosModal?.addEventListener('click', (e) => { if (e.target === sosModal) closeSosModalFn(); });
 
+    // Закрытие модальных окон свайпом вниз на мобильных (Swipe-to-Dismiss)
+    function attachSwipeToDismiss(modalEl, closeCallback) {
+      if (!modalEl) return;
+      const box = modalEl.querySelector('.modal-box');
+      if (!box) return;
+
+      let startY = 0;
+      let currentY = 0;
+      let isDragging = false;
+
+      box.addEventListener('pointerdown', (e) => {
+        if (window.innerWidth > 768) return;
+        const scrollable = box.querySelector('.search-results-list, .sos-modal-body');
+        if (scrollable && scrollable.contains(e.target) && scrollable.scrollTop > 0) return;
+
+        startY = e.clientY;
+        currentY = startY;
+        isDragging = true;
+        box.style.transition = 'none';
+      }, { passive: true });
+
+      box.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        currentY = e.clientY;
+        const deltaY = Math.max(0, currentY - startY);
+        if (deltaY > 0) {
+          box.style.transform = `translateY(${deltaY}px)`;
+        }
+      }, { passive: true });
+
+      function finishSwipe() {
+        if (!isDragging) return;
+        isDragging = false;
+        box.style.transition = '';
+        const deltaY = currentY - startY;
+        if (deltaY > 95) {
+          SDOHaptics.trigger(12);
+          box.style.transform = '';
+          closeCallback();
+        } else {
+          box.style.transform = '';
+        }
+      }
+
+      box.addEventListener('pointerup', finishSwipe, { passive: true });
+      box.addEventListener('pointercancel', finishSwipe, { passive: true });
+    }
+
+    attachSwipeToDismiss(searchModal, closeSearchModalFn);
+    attachSwipeToDismiss(sosModal, closeSosModalFn);
+
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         if (searchModal.classList.contains('open')) closeSearchModalFn();
         else openSearchModal('');
+      }
+      if (e.altKey && e.code === 'KeyZ') {
+        e.preventDefault();
+        toggleZenMode();
       }
       if (e.key === 'Escape') {
         closeHeaderPopovers();
@@ -3298,9 +3645,11 @@
       }, { passive: true });
 
       if (!isMobile && !prefersReducedMotion) {
-        window.addEventListener('mousemove', (e) => {
-          mouse.x = e.clientX;
-          mouse.y = e.clientY;
+        window.addEventListener('pointermove', (e) => {
+          if (e.pointerType === 'mouse') {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+          }
         }, { passive: true });
       }
 
@@ -3326,7 +3675,7 @@
       }
 
       function animateCanvas() {
-        if (!document.hidden) {
+        if (!document.hidden && !document.body.classList.contains('zen-mode')) {
           ctx.clearRect(0, 0, width, height);
           for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
@@ -3380,4 +3729,3 @@
 
 </body>
 </html>
-                            
